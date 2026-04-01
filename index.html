@@ -254,6 +254,91 @@ function updateHoleVisual(){
 }
 
 // ═══════════════════════════════════════════════════
+// TARGET ARROW  — 3D triangle that hovers around the
+// hole rim pointing toward the nearest absorbable object
+// ═══════════════════════════════════════════════════
+// Arrow: a flat triangle (ConeGeometry, 3 sides) + thin stem
+const arrowGroup = new THREE.Group();
+scene.add(arrowGroup);
+
+const arrowHead = new THREE.Mesh(
+  new THREE.ConeGeometry(0.38, 0.7, 3),
+  new THREE.MeshBasicMaterial({color:0xf0e68c, transparent:true, opacity:0.92, side:THREE.DoubleSide})
+);
+arrowHead.position.y = 0; // will be repositioned each frame
+arrowGroup.add(arrowHead);
+
+const arrowStem = new THREE.Mesh(
+  new THREE.BoxGeometry(0.13, 0.45, 0.08),
+  new THREE.MeshBasicMaterial({color:0xf0e68c, transparent:true, opacity:0.7})
+);
+arrowStem.position.y = -0.55;
+arrowGroup.add(arrowStem);
+
+arrowGroup.visible = false;
+
+let arrowTarget = null;      // current target object
+let arrowPulseT  = 0;
+
+function findNearestTarget(){
+  let best = null, bestDist = Infinity;
+  objects.forEach(obj=>{
+    if(obj.absorbed||obj.falling) return;
+    if(obj.size >= holeSize) return;            // too big
+    const dx=obj.mesh.position.x-holeX, dz=obj.mesh.position.z-holeZ;
+    const d=Math.sqrt(dx*dx+dz*dz);
+    if(d<bestDist){ bestDist=d; best=obj; }
+  });
+  return best;
+}
+
+function updateArrow(frame){
+  // refresh target every 30 frames or when current target is gone
+  if(frame%30===0 || !arrowTarget || arrowTarget.absorbed || arrowTarget.falling){
+    arrowTarget = findNearestTarget();
+  }
+  if(!arrowTarget){ arrowGroup.visible=false; return; }
+
+  arrowGroup.visible = true;
+  arrowPulseT += 0.06;
+
+  const tx = arrowTarget.mesh.position.x;
+  const tz = arrowTarget.mesh.position.z;
+  const dx = tx - holeX, dz = tz - holeZ;
+  const dist = Math.sqrt(dx*dx+dz*dz);
+
+  // Angle in XZ plane (atan2 gives angle from +X axis)
+  const angle = Math.atan2(dx, dz); // note: swapped for Three.js Z-forward
+
+  // Place arrow just outside hole rim, floating above ground
+  const orbitR = holeSize * 1.55 + 0.3;
+  const bobY   = 0.6 + holeSize*0.25 + Math.sin(arrowPulseT)*0.18;
+
+  arrowGroup.position.set(
+    holeX + Math.sin(angle) * orbitR,
+    bobY,
+    holeZ + Math.cos(angle) * orbitR
+  );
+
+  // Rotate group so arrow points AWAY from hole (toward target)
+  arrowGroup.rotation.set(0, angle, 0);
+
+  // Scale arrow with hole size so it stays visible
+  const s = Math.max(0.5, Math.min(2.5, holeSize * 0.55 + 0.4));
+  arrowGroup.scale.setScalar(s);
+
+  // Pulse opacity
+  const op = 0.7 + Math.sin(arrowPulseT*1.8)*0.28;
+  arrowHead.material.opacity = op;
+  arrowStem.material.opacity = op * 0.75;
+
+  // Tint: green when close (< 3×holeSize), yellow otherwise
+  const close = dist < holeSize * 4;
+  arrowHead.material.color.setHex(close ? 0x88ff88 : 0xf0e68c);
+  arrowStem.material.color.setHex(close ? 0x88ff88 : 0xf0e68c);
+}
+
+// ═══════════════════════════════════════════════════
 // VOXEL BUILDERS
 // ═══════════════════════════════════════════════════
 function bx(g,color,x,y,z,w,h,d){
@@ -556,7 +641,7 @@ function joyMove(cx,cy){
   const cl=Math.min(dist,r),nx=dist>0?dx/dist:0,ny=dist>0?dy/dist:0,ratio=cl/r;
   joyStick.style.left=(joyOriginX+nx*cl)+'px';
   joyStick.style.top =(joyOriginY+ny*cl)+'px';
-  const spd=Math.max(.05,holeSize*.07);
+  const spd=Math.max(.12,holeSize*.13);
   joyDX=nx*ratio*spd; joyDZ=ny*ratio*spd;
 }
 
@@ -640,6 +725,7 @@ function animate(){
       obj.mesh.rotation.y+=.22; obj.mesh.rotation.x+=.1;
       if(obj.mesh.position.y<-10||obj.mesh.scale.x<.03){
         scene.remove(obj.mesh); obj.absorbed=true;
+        if(arrowTarget===obj) arrowTarget=null;  // force re-find next frame
         holeSize=Math.min(holeSize+growAmount(obj.size), lv().holeMax);
         score++; levelAbsorbed++;
         scoreEl.textContent=score;
@@ -695,6 +781,9 @@ function animate(){
   // rim pulse
   const pulse=1+Math.sin(frame*.09)*.032;
   holeRim.scale.set(holeSize*pulse,holeSize*pulse,holeSize*pulse);
+
+  // target arrow
+  updateArrow(frame);
 
   renderer.render(scene,camera);
 }
