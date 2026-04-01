@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>VOID HOLE</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    background: #0a0a0f;
+    font-family: 'Courier New', monospace;
+    overflow: hidden;
+    user-select: none;
+    touch-action: none;
+    width: 100%; height: 100%;
+    position: fixed;
+  }
+  #canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+  #score-panel {
+    position: fixed;
+    top: env(safe-area-inset-top, 12px);
+    left: 16px;
+    padding-top: 10px;
+    color: #e8e0c8;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    line-height: 1.8;
+    pointer-events: none;
+  }
+  #score-panel .val {
+    font-size: 22px; font-weight: bold;
+    color: #f0e68c; display: block; line-height: 1.1;
+  }
+  #combo {
+    position: fixed;
+    top: env(safe-area-inset-top, 12px);
+    right: 16px; padding-top: 10px;
+    color: #c86464; font-size: 9px;
+    letter-spacing: 0.2em; text-align: right;
+    pointer-events: none;
+  }
+  #combo .cval {
+    font-size: 32px; font-weight: bold;
+    display: block; line-height: 1;
+    text-shadow: 0 0 16px #c8646488;
+  }
+  #size-bar-wrap {
+    position: fixed;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+    left: 50%; transform: translateX(-50%);
+    width: min(80vw, 280px);
+    text-align: center; color: #a09880;
+    font-size: 9px; letter-spacing: 0.2em;
+    pointer-events: none;
+  }
+  #size-label { margin-bottom: 6px; color: #e8e0c8; }
+  #size-bar-bg {
+    width: 100%; height: 5px;
+    background: #1a1a24; border-radius: 3px; overflow: hidden;
+  }
+  #size-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #4a3f8a, #c86464, #f0e68c);
+    border-radius: 3px; transition: width 0.3s ease; width: 5%;
+  }
+  #illusion-msg {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    color: #f0e68c; font-size: 13px;
+    letter-spacing: 0.2em; opacity: 0;
+    pointer-events: none; text-transform: uppercase;
+    text-shadow: 0 0 20px #f0e68c88;
+    transition: opacity 0.5s; white-space: nowrap;
+  }
+  #hint {
+    position: fixed;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 54px);
+    left: 50%; transform: translateX(-50%);
+    color: #504838; font-size: 9px;
+    letter-spacing: 0.15em; text-align: center;
+    pointer-events: none; transition: opacity 1s; white-space: nowrap;
+  }
+  #finger-dot {
+    position: fixed; width: 52px; height: 52px;
+    border-radius: 50%;
+    border: 2px solid rgba(240,230,140,0.45);
+    pointer-events: none; z-index: 20;
+    transform: translate(-50%, -50%); display: none;
+    box-shadow: 0 0 14px rgba(240,230,140,0.25);
+    transition: opacity 0.1s;
+  }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div id="finger-dot"></div>
+<div id="score-panel">
+  <span>SWALLOWED</span>
+  <span class="val" id="score-val">0</span>
+  <span style="margin-top:8px;display:block;">HOLE SIZE</span>
+  <span class="val" id="hole-val">1.0</span>
+</div>
+<div id="combo">
+  <span>COMBO</span>
+  <span class="cval" id="combo-val">×1</span>
+</div>
+<div id="size-bar-wrap">
+  <div id="size-label">◈ SCALE CYCLE ◈</div>
+  <div id="size-bar-bg"><div id="size-bar"></div></div>
+  <div style="margin-top:5px;color:#3a3428;">∞ LOOPS BACK AT MAX</div>
+</div>
+<div id="illusion-msg">◈ SCALE RESET — LOOP ◈</div>
+<div id="hint">ゆびで穴を動かす · タップで引力</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const canvas = document.getElementById('canvas');
+const W = () => window.innerWidth;
+const H = () => window.innerHeight;
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(W(), H());
+renderer.shadowMap.enabled = false;
+renderer.setClearColor(0x0a0a0f);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x0a0a0f, 0.022);
+
+const camera = new THREE.PerspectiveCamera(60, W()/H(), 0.1, 150);
+camera.position.set(0, 20, 20);
+camera.lookAt(0, 0, 0);
+
+scene.add(new THREE.AmbientLight(0x2a2a4e, 2.5));
+const dirLight = new THREE.DirectionalLight(0xfff5d0, 3);
+dirLight.position.set(15, 30, 15);
+scene.add(dirLight);
+const ptLight = new THREE.PointLight(0x6644cc, 3, 25);
+scene.add(ptLight);
+
+const TILE = 60;
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(TILE*3, TILE*3, 20, 20),
+  new THREE.MeshLambertMaterial({ color: 0x12121e })
+);
+ground.rotation.x = -Math.PI/2;
+scene.add(ground);
+const grid = new THREE.GridHelper(TILE*3, 60, 0x1e1e30, 0x181828);
+scene.add(grid);
+
+const PALETTES = [
+  [0xc86464,0xa84848,0x883030],[0x6480c8,0x4860a8,0x304888],
+  [0x64c880,0x48a860,0x308840],[0xc8c064,0xa8a048,0x888030],
+  [0xc864c8,0xa848a8,0x883088],[0x64c8c8,0x48a8a8,0x308888],
+  [0xc89664,0xa87648,0x885630],[0xe8e0c8,0xc8c0a8,0xa8a088],
+];
+
+const voxels = [];
+const MAX_V = 50;
+let holeSize = 1.0, holeX = 0, holeZ = 0;
+let score = 0, combo = 1, comboTimer = 0;
+
+function makeVoxel(size, pal) {
+  const g = new THREE.Group();
+  [[0,0,0,1,0],[1,0,0,.8,1],[0,1,0,.8,1],[0,0,1,.8,2],[-1,0,0,.6,2],[1,1,0,.6,2]].forEach(([x,y,z,s,ci]) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(s*size,s*size,s*size), new THREE.MeshLambertMaterial({color:pal[ci]}));
+    m.position.set(x*size*.88, y*size*.88, z*size*.88);
+    g.add(m);
+  });
+  return g;
+}
+
+function spawnVoxel() {
+  if (voxels.length >= MAX_V) return;
+  const pal = PALETTES[Math.floor(Math.random()*PALETTES.length)];
+  const size = Math.max(0.3, holeSize*0.4) + Math.random() * (holeSize*2.5+2 - Math.max(0.3,holeSize*0.4));
+  const mesh = makeVoxel(size, pal);
+  const a = Math.random()*Math.PI*2, d = 8+Math.random()*28;
+  mesh.position.set(holeX+Math.cos(a)*d, size*.5, holeZ+Math.sin(a)*d);
+  mesh.rotation.y = Math.random()*Math.PI*2;
+  scene.add(mesh);
+  voxels.push({ mesh, size, pal, vx:(Math.random()-.5)*.015, vz:(Math.random()-.5)*.015,
+    rotSpeed:(Math.random()-.5)*.02, falling:false, fallTarget:null, absorbed:false, bobPhase:Math.random()*Math.PI*2 });
+}
+
+// Hole mesh
+const holeGroup = new THREE.Group();
+scene.add(holeGroup);
+const holeDisk = new THREE.Mesh(new THREE.CircleGeometry(1,40), new THREE.MeshBasicMaterial({color:0x000000}));
+holeDisk.rotation.x = -Math.PI/2; holeDisk.position.y = 0.01;
+holeGroup.add(holeDisk);
+const holeRim = new THREE.Mesh(new THREE.RingGeometry(1,1.15,40), new THREE.MeshBasicMaterial({color:0xf0e68c,side:THREE.DoubleSide}));
+holeRim.rotation.x = -Math.PI/2; holeRim.position.y = 0.02;
+holeGroup.add(holeRim);
+for (let i=0;i<3;i++) {
+  const r = new THREE.Mesh(new THREE.RingGeometry(1.2+i*.3,1.35+i*.3,40),
+    new THREE.MeshBasicMaterial({color:0x4a3f8a,transparent:true,opacity:.13-i*.04,side:THREE.DoubleSide}));
+  r.rotation.x = -Math.PI/2; r.position.y = 0.005;
+  r.userData.gi = i; holeGroup.add(r);
+}
+
+function updateHole() {
+  holeDisk.scale.set(holeSize,holeSize,holeSize);
+  holeGroup.children.forEach(c => {
+    if (c.userData.gi != null) { const b=1+c.userData.gi*.3; c.scale.set(holeSize*b,holeSize*b,holeSize*b); }
+  });
+  ptLight.position.set(holeX,3,holeZ);
+  ptLight.color.setHSL((holeSize*.08)%1,.7,.5);
+}
+
+// Touch & mouse
+const fingerDot = document.getElementById('finger-dot');
+const mouse = new THREE.Vector2();
+const raycaster = new THREE.Raycaster();
+const gPlane = new THREE.Plane(new THREE.Vector3(0,1,0),0);
+
+function setMouse(cx, cy) {
+  mouse.x = (cx/W())*2-1;
+  mouse.y = -(cy/H())*2+1;
+}
+
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const t = e.touches[0];
+  setMouse(t.clientX, t.clientY);
+  fingerDot.style.display = 'block';
+  fingerDot.style.left = t.clientX+'px';
+  fingerDot.style.top = t.clientY+'px';
+  boostSuction();
+}, { passive: false });
+
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  const t = e.touches[0];
+  setMouse(t.clientX, t.clientY);
+  fingerDot.style.left = t.clientX+'px';
+  fingerDot.style.top = t.clientY+'px';
+}, { passive: false });
+
+canvas.addEventListener('touchend', e => {
+  e.preventDefault();
+  fingerDot.style.display = 'none';
+}, { passive: false });
+
+canvas.addEventListener('mousemove', e => setMouse(e.clientX, e.clientY));
+canvas.addEventListener('click', boostSuction);
+
+function boostSuction() {
+  voxels.forEach(obj => {
+    if (obj.absorbed||obj.falling) return;
+    const dx=holeX-obj.mesh.position.x, dz=holeZ-obj.mesh.position.z;
+    if (Math.sqrt(dx*dx+dz*dz)<holeSize*5 && obj.size<holeSize) { obj.vx+=dx*.04; obj.vz+=dz*.04; }
+  });
+}
+
+// Scale illusion loop
+const SMAX=12,SMIN=1; let loops=0;
+function scaleReset() {
+  loops++; holeSize=SMIN; combo=Math.min(combo+1,9);
+  const ratio=SMAX/SMIN;
+  voxels.forEach(o => { o.size/=ratio; o.mesh.scale.setScalar(1/ratio); });
+  const msg=document.getElementById('illusion-msg');
+  msg.style.opacity='1';
+  msg.textContent=['◈ LOOP '+loops+' — SCALE RESET ◈','∞ THE VOID IS ENDLESS ∞','◈ YOU ARE SMALL AGAIN ◈'][loops%3];
+  setTimeout(()=>{ msg.style.opacity='0'; },1800);
+}
+
+// Particles
+const particles=[];
+function spawnParts(x,z,color) {
+  for(let i=0;i<8;i++){
+    const m=new THREE.Mesh(new THREE.BoxGeometry(.1,.1,.1),new THREE.MeshBasicMaterial({color,transparent:true}));
+    m.position.set(x,.5,z); scene.add(m);
+    particles.push({mesh:m,vx:(Math.random()-.5)*.18,vy:.05+Math.random()*.12,vz:(Math.random()-.5)*.18,life:35+Math.random()*25,maxLife:60});
+  }
+}
+
+// UI elements
+const scoreEl=document.getElementById('score-val');
+const holeEl=document.getElementById('hole-val');
+const comboEl=document.getElementById('combo-val');
+const sizeBar=document.getElementById('size-bar');
+
+let camTX=0,camTZ=0,frame=0;
+for(let i=0;i<25;i++) spawnVoxel();
+
+function animate() {
+  requestAnimationFrame(animate);
+  frame++;
+
+  // Move hole
+  raycaster.setFromCamera(mouse,camera);
+  const wp=new THREE.Vector3();
+  if(raycaster.ray.intersectPlane(gPlane,wp)) {
+    holeX+=(wp.x-holeX)*.14;
+    holeZ+=(wp.z-holeZ)*.14;
+  }
+  holeGroup.position.set(holeX,0,holeZ);
+  updateHole();
+
+  // Camera
+  camTX+=(holeX-camTX)*.04;
+  camTZ+=(holeZ-camTZ)*.04;
+  camera.position.x+=(camTX-camera.position.x)*.07;
+  camera.position.z+=(camTZ+20-camera.position.z)*.07;
+  camera.position.y=20;
+  camera.lookAt(camTX,0,camTZ);
+
+  // Ground infinite
+  ground.position.x=Math.round(camera.position.x/TILE)*TILE;
+  ground.position.z=Math.round(camera.position.z/TILE)*TILE;
+  grid.position.x=ground.position.x; grid.position.z=ground.position.z;
+
+  // Voxels
+  voxels.forEach(obj=>{
+    if(obj.absorbed) return;
+    if(obj.falling){
+      obj.mesh.position.x+=(obj.fallTarget.x-obj.mesh.position.x)*.12;
+      obj.mesh.position.z+=(obj.fallTarget.z-obj.mesh.position.z)*.12;
+      obj.mesh.position.y-=.2;
+      obj.mesh.scale.multiplyScalar(.92);
+      obj.mesh.rotation.y+=.18; obj.mesh.rotation.x+=.09;
+      if(obj.mesh.position.y<-4||obj.mesh.scale.x<.04){
+        scene.remove(obj.mesh); obj.absorbed=true;
+        holeSize=Math.min(holeSize+obj.size*.15,SMAX);
+        score++; scoreEl.textContent=score; holeEl.textContent=holeSize.toFixed(1);
+        spawnParts(holeX,holeZ,obj.pal[0]);
+        sizeBar.style.width=(5+((holeSize-SMIN)/(SMAX-SMIN))*95)+'%';
+        if(holeSize>=SMAX-.1) scaleReset();
+      }
+    } else {
+      obj.mesh.position.y=obj.size*.5+Math.sin(frame*.018+obj.bobPhase)*.12;
+      obj.mesh.rotation.y+=obj.rotSpeed;
+      obj.mesh.position.x+=obj.vx; obj.mesh.position.z+=obj.vz;
+      const dx=holeX-obj.mesh.position.x, dz=holeZ-obj.mesh.position.z;
+      const dist=Math.sqrt(dx*dx+dz*dz), sR=holeSize*3;
+      if(dist<sR&&obj.size<holeSize){ const f=(1-dist/sR)*.045; obj.mesh.position.x+=dx*f; obj.mesh.position.z+=dz*f; }
+    }
+  });
+
+  // Auto-absorb
+  if(frame%3===0){
+    voxels.forEach(obj=>{
+      if(obj.absorbed||obj.falling) return;
+      const dx=obj.mesh.position.x-holeX, dz=obj.mesh.position.z-holeZ;
+      if(obj.size<holeSize&&Math.sqrt(dx*dx+dz*dz)<holeSize*.9){ obj.falling=true; obj.fallTarget={x:holeX,z:holeZ}; comboTimer=180; }
+    });
+  }
+
+  // Particles
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.mesh.position.x+=p.vx; p.mesh.position.y+=p.vy; p.mesh.position.z+=p.vz;
+    p.vy-=.005; p.life--;
+    p.mesh.material.opacity=p.life/p.maxLife;
+    if(p.life<=0){ scene.remove(p.mesh); particles.splice(i,1); }
+  }
+
+  // Combo
+  if(comboTimer>0){ comboTimer--; if(!comboTimer) combo=1; }
+  comboEl.textContent='×'+combo;
+
+  // Spawn
+  if(frame%100===0){
+    for(let i=voxels.length-1;i>=0;i--){ if(voxels[i].absorbed) voxels.splice(i,1); }
+    const need=Math.min(MAX_V-voxels.length,4);
+    for(let i=0;i<need;i++) spawnVoxel();
+  }
+
+  // Rim pulse
+  const p=1+Math.sin(frame*.08)*.04;
+  holeRim.scale.set(holeSize*p,holeSize*p,holeSize*p);
+
+  renderer.render(scene,camera);
+}
+
+animate();
+
+window.addEventListener('resize',()=>{
+  camera.aspect=W()/H();
+  camera.updateProjectionMatrix();
+  renderer.setSize(W(),H());
+});
+
+setTimeout(()=>{ document.getElementById('hint').style.opacity='0'; },5000);
+</script>
+</body>
+</html>
