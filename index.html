@@ -8,36 +8,34 @@
 <title>VOID HOLE</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{background:#0a0a0f;font-family:'Courier New',monospace;overflow:hidden;
+html,body{background:#0a0a12;font-family:'Courier New',monospace;overflow:hidden;
   user-select:none;touch-action:none;width:100%;height:100%;position:fixed;}
 #canvas{display:block;width:100%;height:100%;touch-action:none;}
 
-/* HUD */
-#hud{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:10;}
-
-#level-banner{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;
-  text-align:center;padding-top:14px;pointer-events:none;}
-#level-name{font-size:11px;letter-spacing:.28em;text-transform:uppercase;
-  color:#f0e68c;text-shadow:0 0 12px rgba(240,230,140,.5);}
+#level-name{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;
+  text-align:center;padding-top:14px;font-size:11px;letter-spacing:.28em;
+  text-transform:uppercase;color:#f0e68c;text-shadow:0 0 12px rgba(240,230,140,.5);
+  pointer-events:none;}
 
 #score-panel{position:fixed;top:env(safe-area-inset-top,0px);left:14px;
-  padding-top:14px;color:#c8c0a0;font-size:8px;letter-spacing:.18em;text-transform:uppercase;line-height:1.9;}
+  padding-top:14px;color:#c8c0a0;font-size:8px;letter-spacing:.18em;
+  text-transform:uppercase;line-height:1.9;pointer-events:none;}
 #score-panel .val{font-size:20px;font-weight:bold;color:#f0e68c;display:block;line-height:1.1;}
 
 #combo{position:fixed;top:env(safe-area-inset-top,0px);right:14px;
-  padding-top:14px;color:#c86464;font-size:8px;letter-spacing:.18em;text-align:right;}
-#combo .cval{font-size:28px;font-weight:bold;display:block;line-height:1;text-shadow:0 0 14px #c8646488;}
+  padding-top:14px;color:#c86464;font-size:8px;letter-spacing:.18em;
+  text-align:right;pointer-events:none;}
+#combo .cval{font-size:28px;font-weight:bold;display:block;line-height:1;
+  text-shadow:0 0 14px #c8646488;}
 
-/* Progress bar to next level */
 #progress-wrap{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);
-  left:50%;transform:translateX(-50%);width:min(80vw,300px);text-align:center;
-  color:#807860;font-size:8px;letter-spacing:.18em;}
+  left:50%;transform:translateX(-50%);width:min(80vw,300px);
+  text-align:center;font-size:8px;letter-spacing:.18em;pointer-events:none;}
 #progress-label{margin-bottom:4px;color:#c8c0a0;}
 #progress-bg{width:100%;height:6px;background:#1a1820;border-radius:3px;overflow:hidden;}
-#progress-bar{height:100%;width:0%;border-radius:3px;transition:width .3s ease;}
+#progress-bar{height:100%;width:0%;border-radius:3px;transition:width .3s ease;background:#64a840;}
 #progress-sub{margin-top:4px;color:#484030;}
 
-/* Level-up overlay */
 #levelup{position:fixed;top:0;left:0;right:0;bottom:0;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   pointer-events:none;opacity:0;transition:opacity .5s;z-index:50;}
@@ -49,617 +47,587 @@ html,body{background:#0a0a0f;font-family:'Courier New',monospace;overflow:hidden
   color:#f0e68c;font-size:12px;letter-spacing:.22em;opacity:0;
   pointer-events:none;text-transform:uppercase;text-shadow:0 0 18px #f0e68c88;
   transition:opacity .4s;white-space:nowrap;}
-
 #hint{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 50px);
   left:50%;transform:translateX(-50%);color:#403830;font-size:8px;
   letter-spacing:.14em;pointer-events:none;transition:opacity 1.2s;white-space:nowrap;}
 
-/* Joystick */
 #joy-base{position:fixed;border-radius:50%;border:1.5px solid rgba(240,230,140,.15);
   background:rgba(240,230,140,.03);pointer-events:none;z-index:30;display:none;
   transform:translate(-50%,-50%);}
-#joy-stick{position:fixed;border-radius:50%;background:rgba(240,230,140,.3);
+#joy-stick{position:fixed;border-radius:50%;background:rgba(240,230,140,.28);
   pointer-events:none;z-index:31;display:none;transform:translate(-50%,-50%);
-  box-shadow:0 0 8px rgba(240,230,140,.35);}
+  box-shadow:0 0 8px rgba(240,230,140,.3);}
 </style>
 </head>
 <body>
 <canvas id="canvas"></canvas>
 <div id="joy-base"></div>
 <div id="joy-stick"></div>
-<div id="hud">
-  <div id="level-banner"><span id="level-name">◈ VILLAGE ◈</span></div>
-  <div id="score-panel">
-    <span>SWALLOWED</span><span class="val" id="score-val">0</span>
-    <span style="margin-top:4px;display:block;">HOLE SIZE</span><span class="val" id="hole-val">1.0</span>
-  </div>
-  <div id="combo"><span>COMBO</span><span class="cval" id="combo-val">×1</span></div>
-  <div id="progress-wrap">
-    <div id="progress-label">NEXT LEVEL</div>
-    <div id="progress-bg"><div id="progress-bar"></div></div>
-    <div id="progress-sub">0 / 0</div>
-  </div>
-  <div id="levelup"><div id="levelup-title"></div><div id="levelup-sub"></div></div>
-  <div id="msg"></div>
-  <div id="hint">画面を押して指を滑らせて操作</div>
+
+<div id="level-name">◈ VILLAGE ◈</div>
+<div id="score-panel">
+  <span>SWALLOWED</span><span class="val" id="score-val">0</span>
+  <span style="margin-top:4px;display:block;">HOLE SIZE</span><span class="val" id="hole-val">1.0</span>
 </div>
+<div id="combo"><span>COMBO</span><span class="cval" id="combo-val">×1</span></div>
+<div id="progress-wrap">
+  <div id="progress-label">NEXT LEVEL</div>
+  <div id="progress-bg"><div id="progress-bar"></div></div>
+  <div id="progress-sub">0 / 0</div>
+</div>
+<div id="levelup"><div id="levelup-title"></div><div id="levelup-sub"></div></div>
+<div id="msg"></div>
+<div id="hint">画面を押して指を滑らせて操作</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-// ═══════════════════════════════════════
-// LEVEL DEFINITIONS
-// ═══════════════════════════════════════
-const LEVELS = [
-  { name:'VILLAGE',   nameJP:'むら',    // 0
-    holeMax:3.5,
-    toNextCount:12,          // absorb N objects to level up
-    toNextBase:8,            // base needed (grows with hole)
-    groundColor:0x1a2810,    sky:0x0a1208,
-    fogNear:40,  fogFar:120,
-    barColor:'#64a840',
-    buildings:['house','doghouse','shed'],
-    objScale:1.0,
-  },
-  { name:'TOWN',      nameJP:'まち',    // 1
-    holeMax:7,
-    toNextBase:20,
-    groundColor:0x14201a,    sky:0x0a1210,
-    fogNear:60,  fogFar:180,
-    barColor:'#40a880',
-    buildings:['house','shop','church','doghouse'],
-    objScale:1.4,
-  },
-  { name:'CITY',      nameJP:'とし',    // 2
-    holeMax:14,
-    toNextBase:40,
-    groundColor:0x101418,    sky:0x080c10,
-    fogNear:80,  fogFar:240,
-    barColor:'#4080c8',
-    buildings:['tower','shop','factory','church'],
-    objScale:2.2,
-  },
-  { name:'PREFECTURE', nameJP:'けん',   // 3
-    holeMax:26,
-    toNextBase:70,
-    groundColor:0x141210,    sky:0x100e0a,
-    fogNear:120, fogFar:360,
-    barColor:'#c8a040',
-    buildings:['tower','factory','skyscraper','bridge'],
-    objScale:4.0,
-  },
-  { name:'COUNTRY',   nameJP:'くに',    // 4
-    holeMax:50,
-    toNextBase:110,
-    groundColor:0x101010,    sky:0x080808,
-    fogNear:180, fogFar:500,
-    barColor:'#c86040',
-    buildings:['mountain','skyscraper','stadium','tower'],
-    objScale:8.0,
-  },
-  { name:'EARTH',     nameJP:'ちきゅう',// 5
-    holeMax:90,
-    toNextBase:160,
-    groundColor:0x081018,    sky:0x040810,
-    fogNear:280, fogFar:800,
-    barColor:'#6080ff',
-    buildings:['continent','ocean','cloud','satellite'],
-    objScale:18.0,
-  },
-  { name:'PLANET',    nameJP:'わくせい', // 6 — loops back
-    holeMax:999,
-    toNextBase:999,
-    groundColor:0x080408,    sky:0x040208,
-    fogNear:400, fogFar:1200,
-    barColor:'#cc44cc',
-    buildings:['crater','volcano','iceberg','asteroid'],
-    objScale:40.0,
-  },
+// ═══════════════════════════════════════════════════
+// LEVEL DATA
+// ═══════════════════════════════════════════════════
+const LEVELS=[
+  {name:'VILLAGE', nameJP:'むら',  holeMax:3.5,  toNextBase:10,
+   sky:0x0a1a08, ground:0x1a2810, road:0x2a2820, barColor:'#64a840',
+   fogFactor:12,  // fog.far = camH * fogFactor
+   buildings:['house','doghouse','shed'],  roadSpacing:14, buildingGap:5 },
+  {name:'TOWN',    nameJP:'まち',  holeMax:7,    toNextBase:22,
+   sky:0x081410, ground:0x142018, road:0x28261e, barColor:'#40a880',
+   fogFactor:13,
+   buildings:['house','shop','church','doghouse'], roadSpacing:20, buildingGap:7 },
+  {name:'CITY',    nameJP:'とし',  holeMax:14,   toNextBase:45,
+   sky:0x080c12, ground:0x101418, road:0x252525, barColor:'#4080c8',
+   fogFactor:14,
+   buildings:['tower','shop','factory','skyscraper'], roadSpacing:36, buildingGap:12 },
+  {name:'PREFECTURE',nameJP:'けん',holeMax:28,   toNextBase:80,
+   sky:0x0a0c10, ground:0x141210, road:0x242220, barColor:'#c8a040',
+   fogFactor:14,
+   buildings:['skyscraper','factory','bridge','stadium'], roadSpacing:65, buildingGap:22 },
+  {name:'COUNTRY', nameJP:'くに',  holeMax:55,   toNextBase:120,
+   sky:0x080808, ground:0x101010, road:0x202020, barColor:'#c86040',
+   fogFactor:15,
+   buildings:['mountain','stadium','skyscraper','factory'], roadSpacing:120, buildingGap:40 },
+  {name:'EARTH',   nameJP:'ちきゅう',holeMax:100, toNextBase:180,
+   sky:0x040810, ground:0x080c14, road:0x1a1c20, barColor:'#6080ff',
+   fogFactor:15,
+   buildings:['continent','ocean','cloud','satellite'], roadSpacing:220, buildingGap:70 },
+  {name:'PLANET',  nameJP:'わくせい',holeMax:999, toNextBase:250,
+   sky:0x040208, ground:0x080408, road:0x181018, barColor:'#cc44cc',
+   fogFactor:16,
+   buildings:['crater','volcano','iceberg','asteroid'], roadSpacing:400, buildingGap:130 },
 ];
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════
 // RENDERER
-// ═══════════════════════════════════════
-const canvas = document.getElementById('canvas');
+// ═══════════════════════════════════════════════════
+const canvas=document.getElementById('canvas');
 const W=()=>window.innerWidth, H=()=>window.innerHeight;
 
-const renderer = new THREE.WebGLRenderer({canvas,antialias:false,powerPreference:'high-performance'});
+const renderer=new THREE.WebGLRenderer({canvas,antialias:false,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
 renderer.setSize(W(),H());
 renderer.shadowMap.enabled=false;
 
-const scene = new THREE.Scene();
+const scene=new THREE.Scene();
 
-const FOV=52;
-const TAN_HALF=Math.tan(FOV/2*Math.PI/180);
-const HOLE_FRAC=0.10;
-const PITCH_DEG=62, PITCH=PITCH_DEG*Math.PI/180;
+// ─── Camera setup ───────────────────────────────────
+// Angled down (not top-down). Pitch ~60° from horizontal.
+// Height scales with holeSize so hole is constant fraction of screen.
+const FOV=52, TAN_HALF=Math.tan(FOV/2*Math.PI/180);
+const HOLE_FRAC=0.10, PITCH=60*Math.PI/180;
+const camera=new THREE.PerspectiveCamera(FOV,W()/H(),.5,3000);
 
-const camera = new THREE.PerspectiveCamera(FOV,W()/H(),.5,2000);
-
-function camHeightForHole(hs){ return hs/(HOLE_FRAC*TAN_HALF); }
+function camHeightForHole(hs){ return Math.max(4, hs/(HOLE_FRAC*TAN_HALF)); }
 function applyCamera(cx,cz,ch){
   const dist=ch/Math.sin(PITCH);
-  const back=dist*Math.cos(PITCH);
-  camera.position.set(cx,ch,cz+back);
+  camera.position.set(cx, ch, cz+dist*Math.cos(PITCH));
   camera.lookAt(cx,0,cz);
   camera.up.set(0,1,0);
 }
 
-// ═══════════════════════════════════════
-// LIGHTS
-// ═══════════════════════════════════════
-scene.add(new THREE.AmbientLight(0x404060,2.8));
-const sun=new THREE.DirectionalLight(0xfff8e0,2.8);
-sun.position.set(.5,1,.7).normalize();
-scene.add(sun);
-const ptLight=new THREE.PointLight(0x6644cc,4,200);
-scene.add(ptLight);
+// ─── Lighting: FIXED BRIGHTNESS regardless of camera height ─────────────
+// Key: use hemisphere light + directional. NO point light as main light.
+// This means brightness is 100% view-independent.
+const hemiLight=new THREE.HemisphereLight(0xfff8e0, 0x304050, 2.2);
+scene.add(hemiLight);
+const dirLight=new THREE.DirectionalLight(0xfff8e0, 2.5);
+dirLight.position.set(.6,1,.5).normalize();
+scene.add(dirLight);
+// Accent point light travels WITH camera — always illuminates foreground
+const camLight=new THREE.PointLight(0xffeedd, 1.8, 0);  // distance=0 → infinite
+camLight.position.set(0,1,0); // relative; we update each frame
+scene.add(camLight);
 
-// ═══════════════════════════════════════
-// GROUND
-// ═══════════════════════════════════════
-const TILE=300;
-const groundMat=new THREE.MeshLambertMaterial({color:LEVELS[0].groundColor});
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(TILE*5,TILE*5,60,60),groundMat);
-ground.rotation.x=-Math.PI/2;
+// ═══════════════════════════════════════════════════
+// GROUND (large flat plane, follows camera in chunks)
+// ═══════════════════════════════════════════════════
+const TILE=500;
+const groundMat=new THREE.MeshLambertMaterial({color:LEVELS[0].ground});
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(TILE*3,TILE*3,4,4),groundMat);
+ground.rotation.x=-Math.PI/2; ground.position.y=-.01;
 scene.add(ground);
-const grid=new THREE.GridHelper(TILE*5,200,0x1a1a30,0x131323);
-scene.add(grid);
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// ROAD SYSTEM
+// Roads are thin flat boxes in a grid pattern.
+// They are rebuilt when level changes.
+// They follow the camera (fake-infinite via repositioning).
+// ═══════════════════════════════════════════════════
+const roadGroup=new THREE.Group();
+scene.add(roadGroup);
+const roadMat=new THREE.MeshLambertMaterial({color:LEVELS[0].road});
+
+// We keep a pool of road segments (lines in X and Z direction)
+// covering a large area around the origin, then shift the whole group
+// to follow the camera.
+let roadSpacing=LEVELS[0].roadSpacing;
+const ROAD_COUNT=14;  // number of road lines in each axis
+const ROAD_WIDTH=0.18; // fraction of roadSpacing
+
+function buildRoads(lv){
+  // clear
+  while(roadGroup.children.length) roadGroup.remove(roadGroup.children[0]);
+  roadMat.color.setHex(lv.road);
+  roadSpacing=lv.roadSpacing;
+  const sp=roadSpacing;
+  const total=sp*ROAD_COUNT;
+  const rw=Math.max(.5, sp*ROAD_WIDTH);
+  const len=total+sp*2;
+
+  for(let i=-ROAD_COUNT/2; i<=ROAD_COUNT/2; i++){
+    // road along X axis
+    const mz=new THREE.Mesh(
+      new THREE.PlaneGeometry(len, rw, 1,1),
+      roadMat);
+    mz.rotation.x=-Math.PI/2; mz.position.set(0,.005,i*sp);
+    roadGroup.add(mz);
+    // road along Z axis
+    const mx=new THREE.Mesh(
+      new THREE.PlaneGeometry(rw, len, 1,1),
+      roadMat);
+    mx.rotation.x=-Math.PI/2; mx.position.set(i*sp,.005,0);
+    roadGroup.add(mx);
+  }
+}
+buildRoads(LEVELS[0]);
+
+// Snap road group to grid so seams line up perfectly
+function updateRoadPosition(cx,cz){
+  const sp=roadSpacing;
+  roadGroup.position.x=Math.round(cx/sp)*sp;
+  roadGroup.position.z=Math.round(cz/sp)*sp;
+}
+
+// ═══════════════════════════════════════════════════
 // GAME STATE
-// ═══════════════════════════════════════
-let holeSize=1.2;
-let holeX=0,holeZ=0;
-let score=0,combo=1,comboTimer=0;
-let levelIdx=0;
-let levelAbsorbed=0; // absorbed in this level
-let levelupActive=false;
+// ═══════════════════════════════════════════════════
+let holeSize=1.2, holeX=0, holeZ=0;
+let score=0, combo=1, comboTimer=0;
+let levelIdx=0, levelAbsorbed=0, levelupActive=false;
 
-function currentLevel(){ return LEVELS[Math.min(levelIdx,LEVELS.length-1)]; }
-// Number needed to advance: grows with hole size
-function neededForNext(){
-  const lv=currentLevel();
-  return lv.toNextBase + Math.floor(holeSize*3);
-}
-// Growth per absorb: tiny fraction; bigger buildings = bigger growth
-const GROW_BASE=0.04;
+const lv=()=>LEVELS[Math.min(levelIdx,LEVELS.length-1)];
+function neededForNext(){ return lv().toNextBase+Math.floor(holeSize*4); }
 function growAmount(objSize){
-  // smaller fraction as hole grows → need more absorbs
   const ratio=objSize/holeSize;
-  return objSize * GROW_BASE * Math.max(0.05, Math.min(1, ratio));
+  return objSize*0.05*Math.max(0.04,Math.min(1,ratio));
 }
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════
 // HOLE VISUAL
-// ═══════════════════════════════════════
-const holeGroup=new THREE.Group();
-scene.add(holeGroup);
-
-const holeDisk=new THREE.Mesh(new THREE.CircleGeometry(1,56),new THREE.MeshBasicMaterial({color:0x000000}));
-holeDisk.rotation.x=-Math.PI/2; holeDisk.position.y=.04;
-holeGroup.add(holeDisk);
-
-const holeRim=new THREE.Mesh(new THREE.RingGeometry(1,1.14,56),new THREE.MeshBasicMaterial({color:0xf0e68c,side:THREE.DoubleSide}));
-holeRim.rotation.x=-Math.PI/2; holeRim.position.y=.05;
-holeGroup.add(holeRim);
-
+// ═══════════════════════════════════════════════════
+const holeGroup=new THREE.Group(); scene.add(holeGroup);
+const holeDisk=new THREE.Mesh(new THREE.CircleGeometry(1,56),
+  new THREE.MeshBasicMaterial({color:0x000000}));
+holeDisk.rotation.x=-Math.PI/2; holeDisk.position.y=.06; holeGroup.add(holeDisk);
+const holeRim=new THREE.Mesh(new THREE.RingGeometry(1,1.14,56),
+  new THREE.MeshBasicMaterial({color:0xf0e68c,side:THREE.DoubleSide}));
+holeRim.rotation.x=-Math.PI/2; holeRim.position.y=.07; holeGroup.add(holeRim);
 for(let i=0;i<3;i++){
   const r=new THREE.Mesh(new THREE.RingGeometry(1.18+i*.28,1.32+i*.28,56),
-    new THREE.MeshBasicMaterial({color:0x4a3f8a,transparent:true,opacity:.09-i*.026,side:THREE.DoubleSide}));
-  r.rotation.x=-Math.PI/2; r.position.y=.02; r.userData.gi=i;
-  holeGroup.add(r);
+    new THREE.MeshBasicMaterial({color:0x4a3f8a,transparent:true,opacity:.09-i*.025,side:THREE.DoubleSide}));
+  r.rotation.x=-Math.PI/2; r.position.y=.03; r.userData.gi=i; holeGroup.add(r);
 }
-
 function updateHoleVisual(){
   holeDisk.scale.set(holeSize,holeSize,holeSize);
   holeGroup.children.forEach(c=>{
     if(c.userData.gi!=null){const b=1+c.userData.gi*.28;c.scale.set(holeSize*b,holeSize*b,holeSize*b);}
   });
   holeGroup.position.set(holeX,0,holeZ);
-  ptLight.position.set(holeX,8,holeZ);
-  ptLight.color.setHSL((levelIdx*.13)%1,.7,.55);
-  ptLight.distance=Math.max(60,holeSize*18);
 }
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════
 // VOXEL BUILDERS
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════
 function bx(g,color,x,y,z,w,h,d){
-  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshLambertMaterial({color}));
-  m.position.set(x,y+h/2,z); g.add(m); return m;
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),
+    new THREE.MeshLambertMaterial({color}));
+  m.position.set(x,y+h/2,z); g.add(m);
 }
 function cone(g,color,x,y,z,r,h,seg=4,ry=Math.PI/4){
-  const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,seg),new THREE.MeshLambertMaterial({color}));
+  const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,seg),
+    new THREE.MeshLambertMaterial({color}));
   m.position.set(x,y+h/2,z); m.rotation.y=ry; g.add(m);
 }
 function cyl(g,color,x,y,z,r,h){
-  const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,10),new THREE.MeshLambertMaterial({color}));
+  const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,8),
+    new THREE.MeshLambertMaterial({color}));
   m.position.set(x,y+h/2,z); g.add(m);
+}
+function sph(g,color,x,y,z,r){
+  const m=new THREE.Mesh(new THREE.SphereGeometry(r,8,6),
+    new THREE.MeshLambertMaterial({color}));
+  m.position.set(x,y,z); g.add(m);
 }
 
 const B={
-  house(s){
-    const g=new THREE.Group();
-    bx(g,0xc8a060, 0,0,0, s,s*.75,s);
-    cone(g,0xcc6040, 0,s*.75,0, s*.72,s*.6);
-    bx(g,0x664422, 0,0,s*.5+.01, s*.22,s*.38,.01);
-    bx(g,0xaae8ff, -s*.28,s*.3,s*.5+.01, s*.2,s*.2,.01);
-    bx(g,0xaae8ff,  s*.28,s*.3,s*.5+.01, s*.2,s*.2,.01);
-    return g;
-  },
-  doghouse(s){
-    const g=new THREE.Group();
-    bx(g,0xb07840, 0,0,0, s*.85,s*.6,s*.85);
-    cone(g,0x884422, 0,s*.6,0, s*.65,s*.5);
-    const d=new THREE.Mesh(new THREE.CircleGeometry(s*.22,16),new THREE.MeshLambertMaterial({color:0x332200}));
-    d.rotation.x=-Math.PI/2+Math.PI/2; d.position.set(0,s*.24,s*.43+.01); g.add(d);
-    return g;
-  },
-  shed(s){
-    const g=new THREE.Group();
-    bx(g,0x806040, 0,0,0, s*.9,s*.55,s*.7);
-    bx(g,0x604828, 0,s*.55,0, s*.9,.06,s*.7);
-    bx(g,0x604828, 0,s*.3,s*.35+.01, s*.35,s*.4,.01);
-    return g;
-  },
-  shop(s){
-    const g=new THREE.Group();
-    bx(g,0xe8c880, 0,0,0, s,s*.7,s*.8);
-    bx(g,0x88ccff, 0,s*.22,s*.4+.01, s*.72,s*.3,.01);
-    const aw=new THREE.Mesh(new THREE.BoxGeometry(s*1.1,.06,s*.35),new THREE.MeshLambertMaterial({color:0xee6644}));
-    aw.position.set(0,s*.56,s*.57); g.add(aw);
-    bx(g,0xffeedd, 0,s*.62,s*.4+.01, s*.6,s*.1,.01);
-    return g;
-  },
-  church(s){
-    const g=new THREE.Group();
-    bx(g,0xe8e4d8, 0,0,0, s,s*.8,s*1.2);
-    bx(g,0xcccccc, 0,s*.8,0, s*.32,s*.5,s*.32);
-    cone(g,0x8866aa, 0,s*1.3,0, s*.22,s*.7,4);
-    bx(g,0xcccccc, 0,s*1.78,0, .06*s,s*.28,.06*s);
-    bx(g,0xcccccc, 0,s*1.86,0, s*.2,.06*s,.06*s);
-    bx(g,0x7799cc, 0,0,s*.6+.01, s*.3,s*.42,.01);
-    return g;
-  },
-  factory(s){
-    const g=new THREE.Group();
-    bx(g,0x889988, 0,0,0, s*1.3,s*.55,s);
-    bx(g,0x667766, 0,s*.55,0, s*1.3,.07,s);
-    cyl(g,0xaa5533, -s*.38,s*.55,s*.1, s*.1,s*.75);
-    cyl(g,0xaa5533,  s*.28,s*.55,s*.1, s*.08,s*.55);
-    bx(g,0xaa5533, -s*.38,s*1.3,s*.1, s*.16,.06,s*.16);
-    for(let i=0;i<3;i++) bx(g,0xaabbaa,-s*.38+i*s*.4,s*.2,s*.5+.01,s*.22,s*.22,.01);
-    return g;
-  },
-  tower(s){
-    const g=new THREE.Group();
-    const fl=3+Math.floor(s*.7),fh=s*.45;
+  house(s){const g=new THREE.Group();
+    bx(g,0xc8a060,0,0,0,s,s*.75,s);
+    cone(g,0xcc6040,0,s*.75,0,s*.72,s*.6);
+    bx(g,0x664422,0,0,s*.5+.01,s*.22,s*.38,.01);
+    bx(g,0x88ccee,-s*.28,s*.3,s*.5+.01,s*.2,s*.2,.01);
+    bx(g,0x88ccee, s*.28,s*.3,s*.5+.01,s*.2,s*.2,.01);
+    return g;},
+  doghouse(s){const g=new THREE.Group();
+    bx(g,0xb07840,0,0,0,s*.85,s*.6,s*.85);
+    cone(g,0x884422,0,s*.6,0,s*.65,s*.5);
+    bx(g,0x332200,0,0,s*.43+.01,s*.3,s*.36,.01);
+    return g;},
+  shed(s){const g=new THREE.Group();
+    bx(g,0x806040,0,0,0,s*.9,s*.55,s*.7);
+    bx(g,0x5a4020,0,s*.55,0,s*.9,.06,s*.7);
+    bx(g,0x604828,0,s*.3,s*.35+.01,s*.35,s*.4,.01);
+    return g;},
+  shop(s){const g=new THREE.Group();
+    bx(g,0xe8c880,0,0,0,s,s*.7,s*.8);
+    bx(g,0x88ccff,0,s*.22,s*.4+.01,s*.72,s*.3,.01);
+    bx(g,0xee6644,-s*.4,s*.55,s*.57,s*.1,.06,s*.35);
+    bx(g,0xee6644, s*.4,s*.55,s*.57,s*.1,.06,s*.35);
+    bx(g,0xee6644,0,s*.55,s*.575,s*.8,.06,s*.01);
+    bx(g,0xffeedd,0,s*.62,s*.4+.01,s*.6,s*.1,.01);
+    return g;},
+  church(s){const g=new THREE.Group();
+    bx(g,0xe8e4d8,0,0,0,s,s*.8,s*1.2);
+    bx(g,0xcccccc,0,s*.8,0,s*.32,s*.5,s*.32);
+    cone(g,0x8866aa,0,s*1.3,0,s*.22,s*.7,4);
+    bx(g,0xdddddd,0,s*1.78,0,.06*s,s*.28,.06*s);
+    bx(g,0xdddddd,0,s*1.86,0,s*.2,.06*s,.06*s);
+    bx(g,0x7799cc,0,0,s*.6+.01,s*.3,s*.42,.01);
+    return g;},
+  factory(s){const g=new THREE.Group();
+    bx(g,0x889988,0,0,0,s*1.3,s*.55,s);
+    bx(g,0x667766,0,s*.55,0,s*1.3,.07,s);
+    cyl(g,0xaa5533,-s*.38,s*.55,s*.1,s*.1,s*.75);
+    cyl(g,0xaa5533, s*.28,s*.55,s*.1,s*.08,s*.55);
+    bx(g,0xaa5533,-s*.38,s*1.3,s*.1,s*.16,.06,s*.16);
+    for(let i=0;i<3;i++)bx(g,0xaabbaa,-s*.38+i*s*.4,s*.2,s*.5+.01,s*.22,s*.22,.01);
+    return g;},
+  tower(s){const g=new THREE.Group();
+    const fl=3+Math.floor(s*.6),fh=s*.44;
     for(let i=0;i<fl;i++){
-      bx(g,i%2===0?0x6080b0:0x405880, 0,i*fh,0, s*.75,fh*.92,s*.75);
-      bx(g,0x88ccee, 0,i*fh+fh*.35,s*.375+.01, s*.5,fh*.3,.01);
+      bx(g,i%2===0?0x6080b0:0x405880,0,i*fh,0,s*.75,fh*.92,s*.75);
+      bx(g,0x88ccee,0,i*fh+fh*.35,s*.375+.01,s*.5,fh*.3,.01);
     }
-    bx(g,0xcc4444, 0,fl*fh,0, s*.28,s*.4,s*.28);
-    return g;
-  },
-  skyscraper(s){
-    const g=new THREE.Group();
-    const fl=6+Math.floor(s*.5),fh=s*.38;
+    bx(g,0xcc4444,0,fl*fh,0,s*.28,s*.4,s*.28);
+    return g;},
+  skyscraper(s){const g=new THREE.Group();
+    const fl=5+Math.floor(s*.45),fh=s*.36;
     for(let i=0;i<fl;i++){
-      bx(g,0x607090, 0,i*fh,0, s*.65,fh*.9,s*.65);
+      bx(g,0x607090,0,i*fh,0,s*.65,fh*.9,s*.65);
       if(i%2===0){
         bx(g,0x99ccee,-s*.22,i*fh+fh*.3,s*.33+.01,s*.28,fh*.4,.01);
         bx(g,0x99ccee, s*.22,i*fh+fh*.3,s*.33+.01,s*.28,fh*.4,.01);
       }
     }
-    cone(g,0x888888, 0,fl*fh,0, s*.12,s*.6,8,0);
-    return g;
-  },
-  bridge(s){
-    const g=new THREE.Group();
-    bx(g,0x888880, 0,0,0, s*2,.1*s,s*.35);
-    bx(g,0x666658, -s*.7,0,0, s*.18,s*.5,s*.18);
-    bx(g,0x666658,  s*.7,0,0, s*.18,s*.5,s*.18);
-    bx(g,0x888880, 0,s*.5,0, s*2,.08*s,s*.06);
-    return g;
-  },
-  mountain(s){
-    const g=new THREE.Group();
-    cone(g,0x607050, 0,0,0, s,s*1.3,6,0);
-    cone(g,0xeeeeff, 0,s*.75,0, s*.42,s*.6,6,0);
-    return g;
-  },
-  stadium(s){
-    const g=new THREE.Group();
-    const shell=new THREE.Mesh(new THREE.CylinderGeometry(s,s*1.1,s*.4,16,1,true),new THREE.MeshLambertMaterial({color:0x8888cc,side:THREE.DoubleSide}));
-    shell.position.y=s*.2; g.add(shell);
-    const floor=new THREE.Mesh(new THREE.CircleGeometry(s*.9,16),new THREE.MeshLambertMaterial({color:0x44aa44}));
-    floor.rotation.x=-Math.PI/2; floor.position.y=.1; g.add(floor);
-    bx(g,0x4488cc, 0,s*.4,0, s*.2,.08,s*.2);
-    return g;
-  },
-  continent(s){
-    const g=new THREE.Group();
-    bx(g,0x486030, 0,0,0, s*1.8,s*.15,s*1.3);
-    bx(g,0x607848, -s*.3,s*.15,s*.1, s*.9,s*.1,s*.7);
-    bx(g,0x3a5025,  s*.4,s*.15,-s*.2, s*.6,s*.08,s*.5);
-    bx(g,0x2244aa, 0,0,-s*.9, s*1.2,.08,s*.6);
-    return g;
-  },
-  ocean(s){
-    const g=new THREE.Group();
-    bx(g,0x2244aa, 0,0,0, s*2,s*.06,s*1.6);
-    const wave=new THREE.Mesh(new THREE.PlaneGeometry(s*2,s*1.6,8,8),new THREE.MeshLambertMaterial({color:0x4488cc,transparent:true,opacity:.5}));
-    wave.rotation.x=-Math.PI/2; wave.position.y=s*.07; g.add(wave);
-    return g;
-  },
-  cloud(s){
-    const g=new THREE.Group();
-    [[0,0,0,s*.7],[-.5*s,0,0,s*.5],[.5*s,0,0,s*.5],[-.28*s,.2*s,0,s*.45],[.28*s,.2*s,0,s*.45]].forEach(([x,y,z,r])=>{
-      const m=new THREE.Mesh(new THREE.SphereGeometry(r,8,6),new THREE.MeshLambertMaterial({color:0xeef8ff}));
-      m.position.set(x,y+s*.5,z); g.add(m);
-    });
-    return g;
-  },
-  satellite(s){
-    const g=new THREE.Group();
-    bx(g,0xaaaaaa, 0,s*.5,0, s*.4,s*.2,s*.4);
-    bx(g,0x4466cc, -s*.8,s*.5,0, s*.8,s*.08,s*.28);
-    bx(g,0x4466cc,  s*.8,s*.5,0, s*.8,s*.08,s*.28);
-    cyl(g,0x888888, 0,0,0, s*.04,s*.5);
-    return g;
-  },
-  crater(s){
-    const g=new THREE.Group();
-    const rim=new THREE.Mesh(new THREE.RingGeometry(s*.7,s,12),new THREE.MeshLambertMaterial({color:0x886644}));
+    cone(g,0x888888,0,fl*fh,0,s*.12,s*.6,8,0);
+    return g;},
+  bridge(s){const g=new THREE.Group();
+    bx(g,0x888880,0,0,0,s*2,s*.1,s*.35);
+    bx(g,0x666658,-s*.7,0,0,s*.18,s*.5,s*.18);
+    bx(g,0x666658, s*.7,0,0,s*.18,s*.5,s*.18);
+    bx(g,0x888880,0,s*.5,0,s*2,s*.08,s*.06);
+    return g;},
+  mountain(s){const g=new THREE.Group();
+    cone(g,0x607050,0,0,0,s,s*1.3,6,0);
+    cone(g,0xeeeeff,0,s*.75,0,s*.42,s*.6,6,0);
+    return g;},
+  stadium(s){const g=new THREE.Group();
+    const sh=new THREE.Mesh(new THREE.CylinderGeometry(s,s*1.1,s*.4,16,1,true),
+      new THREE.MeshLambertMaterial({color:0x8888cc,side:THREE.DoubleSide}));
+    sh.position.y=s*.2; g.add(sh);
+    const fl=new THREE.Mesh(new THREE.CircleGeometry(s*.9,16),
+      new THREE.MeshLambertMaterial({color:0x44aa44}));
+    fl.rotation.x=-Math.PI/2; fl.position.y=.1; g.add(fl);
+    return g;},
+  continent(s){const g=new THREE.Group();
+    bx(g,0x486030,0,0,0,s*1.8,s*.15,s*1.3);
+    bx(g,0x607848,-s*.3,s*.15,s*.1,s*.9,s*.1,s*.7);
+    bx(g,0x2244aa,0,0,-s*.9,s*1.2,.08,s*.6);
+    return g;},
+  ocean(s){const g=new THREE.Group();
+    bx(g,0x2244aa,0,0,0,s*2,s*.06,s*1.6);
+    return g;},
+  cloud(s){const g=new THREE.Group();
+    [[0,0,0,s*.7],[-.5*s,0,0,s*.5],[.5*s,0,0,s*.5],
+     [-.28*s,.2*s,0,s*.45],[.28*s,.2*s,0,s*.45]].forEach(([x,y,z,r])=>sph(g,0xeef8ff,x,y+s*.5,z,r));
+    return g;},
+  satellite(s){const g=new THREE.Group();
+    bx(g,0xaaaaaa,0,s*.5,0,s*.4,s*.2,s*.4);
+    bx(g,0x4466cc,-s*.8,s*.5,0,s*.8,s*.08,s*.28);
+    bx(g,0x4466cc, s*.8,s*.5,0,s*.8,s*.08,s*.28);
+    return g;},
+  crater(s){const g=new THREE.Group();
+    const rim=new THREE.Mesh(new THREE.RingGeometry(s*.7,s,12),
+      new THREE.MeshLambertMaterial({color:0x886644}));
     rim.rotation.x=-Math.PI/2; g.add(rim);
-    bx(g,0x6a5035, 0,.02,0, s*.55,s*.06,s*.55);
-    return g;
-  },
-  volcano(s){
-    const g=new THREE.Group();
-    cone(g,0x664422, 0,0,0, s,s*1.1,8,0);
-    cone(g,0x222222, 0,s*.8,0, s*.28,s*.36,8,0);
-    bx(g,0xff4400, 0,s*.9,0, s*.14,s*.15,s*.14);
-    return g;
-  },
-  iceberg(s){
-    const g=new THREE.Group();
-    cone(g,0xcce8ff, 0,0,0, s*.7,s,6,0);
-    bx(g,0x88bbdd, 0,-s*.2,0, s*1.2,s*.3,s*1.2);
-    return g;
-  },
-  asteroid(s){
-    const g=new THREE.Group();
-    const m=new THREE.Mesh(new THREE.DodecahedronGeometry(s*.7,0),new THREE.MeshLambertMaterial({color:0x887766}));
+    bx(g,0x6a5035,0,.02,0,s*.55,s*.06,s*.55);
+    return g;},
+  volcano(s){const g=new THREE.Group();
+    cone(g,0x664422,0,0,0,s,s*1.1,8,0);
+    cone(g,0x222222,0,s*.8,0,s*.28,s*.36,8,0);
+    bx(g,0xff4400,0,s*.9,0,s*.14,s*.15,s*.14);
+    return g;},
+  iceberg(s){const g=new THREE.Group();
+    cone(g,0xcce8ff,0,0,0,s*.7,s,6,0);
+    bx(g,0x88bbdd,0,-s*.2,0,s*1.2,s*.3,s*1.2);
+    return g;},
+  asteroid(s){const g=new THREE.Group();
+    const m=new THREE.Mesh(new THREE.DodecahedronGeometry(s*.7,0),
+      new THREE.MeshLambertMaterial({color:0x887766}));
     m.position.y=s*.5; g.add(m);
-    return g;
-  },
+    return g;},
 };
 
-// ═══════════════════════════════════════
-// OBJECT POOL
-// ═══════════════════════════════════════
-const objects=[];
-const MAX_OBJ=70;
+const PART_COLORS={house:0xc8a060,doghouse:0xb07840,shed:0x806040,shop:0xee6644,
+  church:0xe8e4d8,factory:0x889988,tower:0x6080b0,skyscraper:0x607090,
+  bridge:0x888880,mountain:0x607050,stadium:0x4488cc,continent:0x486030,
+  ocean:0x2244aa,cloud:0xeef8ff,satellite:0x4466cc,crater:0x886644,
+  volcano:0x664422,iceberg:0xcce8ff,asteroid:0x887766};
 
-function getBuilderNames(){
-  const lv=currentLevel();
-  return lv.buildings;
+// ═══════════════════════════════════════════════════
+// OBJECT POOL — spawn along roads
+// ═══════════════════════════════════════════════════
+const objects=[]; const MAX_OBJ=70;
+
+// Return candidate positions along the road grid near (cx,cz)
+// Roads are at multiples of roadSpacing in X and Z.
+// Buildings sit beside the road, offset by buildingGap.
+function roadPositions(cx,cz,count,spread){
+  const sp=roadSpacing;
+  const lvData=lv();
+  const gap=lvData.buildingGap;
+  const positions=[];
+  const gridR=Math.ceil(spread/sp)+2;
+  for(let ix=-gridR;ix<=gridR;ix++){
+    for(let iz=-gridR;iz<=gridR;iz++){
+      const rx=Math.round(cx/sp)*sp + ix*sp;
+      const rz=Math.round(cz/sp)*sp + iz*sp;
+      // buildings on both sides of X-road (road runs along X at z=rz)
+      for(let side=-1;side<=1;side+=2){
+        positions.push({
+          x: rx + (Math.random()-.5)*sp*.7,
+          z: rz + side*(gap + Math.random()*gap*.6),
+          alongX:true});
+      }
+      // buildings on both sides of Z-road
+      for(let side=-1;side<=1;side+=2){
+        positions.push({
+          x: rx + side*(gap + Math.random()*gap*.6),
+          z: rz + (Math.random()-.5)*sp*.7,
+          alongX:false});
+      }
+    }
+  }
+  // shuffle and take count
+  for(let i=positions.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [positions[i],positions[j]]=[positions[j],positions[i]];
+  }
+  return positions.slice(0,count);
 }
 
 function spawnObject(){
   if(objects.length>=MAX_OBJ) return;
-  const lv=currentLevel();
-  const sc=lv.objScale;
-  const names=getBuilderNames();
+  const lvData=lv();
+  const names=lvData.buildings;
   const name=names[Math.floor(Math.random()*names.length)];
-  const builder=B[name];
-  if(!builder) return;
+  const builder=B[name]; if(!builder) return;
 
-  // size variety: some small, some big relative to hole
-  const minS=Math.max(.2*sc, holeSize*.12);
-  const maxS=Math.max(holeSize*2.5, sc*1.5);
+  const minS=Math.max(.2, holeSize*.12);
+  const maxS=Math.max(holeSize*2.5, lvData.holeMax*.4);
   const size=minS+Math.random()*(maxS-minS);
 
+  // pick a road-adjacent position
+  const spread=holeSize*20+30;
+  const posList=roadPositions(holeX,holeZ,1,spread);
+  const pos=posList[0]||{x:holeX+(Math.random()-.5)*spread, z:holeZ+(Math.random()-.5)*spread};
+
   const mesh=builder(size);
-  const ang=Math.random()*Math.PI*2;
-  const dist=holeSize*4+Math.random()*(holeSize*22+20);
-  mesh.position.set(holeX+Math.cos(ang)*dist, 0, holeZ+Math.sin(ang)*dist);
-  mesh.rotation.y=Math.random()*Math.PI*2;
+  mesh.position.set(pos.x,0,pos.z);
+  // face road
+  mesh.rotation.y=(pos.alongX ? 0 : Math.PI/2) + (Math.random()-.5)*.3;
   scene.add(mesh);
 
   objects.push({mesh,size,name,
-    rotSpeed:(Math.random()-.5)*.007,
+    rotSpeed:0, // buildings don't spin; they stand still
     falling:false,fallTarget:null,absorbed:false,
-    bobPhase:Math.random()*Math.PI*2,
-  });
+    bobPhase:Math.random()*Math.PI*2});
 }
-
-const PART_COLORS={
-  house:0xc8a060,doghouse:0xb07840,shed:0x806040,shop:0xee6644,
-  church:0xe8e4d8,factory:0x889988,tower:0x6080b0,skyscraper:0x607090,
-  bridge:0x888880,mountain:0x607050,stadium:0x4488cc,continent:0x486030,
-  ocean:0x2244aa,cloud:0xeef8ff,satellite:0x4466cc,crater:0x886644,
-  volcano:0x664422,iceberg:0xcce8ff,asteroid:0x887766,
-};
 
 function maintainObjects(){
   for(let i=objects.length-1;i>=0;i--){
-    if(objects[i].absorbed){objects.splice(i,1);continue;}
     const o=objects[i];
+    if(o.absorbed){objects.splice(i,1);continue;}
     if(o.falling) continue;
-    const dx=o.mesh.position.x-holeX,dz=o.mesh.position.z-holeZ;
-    const d=Math.sqrt(dx*dx+dz*dz);
-    if(d>holeSize*30+200){scene.remove(o.mesh);objects.splice(i,1);}
+    const dx=o.mesh.position.x-holeX, dz=o.mesh.position.z-holeZ;
+    if(Math.sqrt(dx*dx+dz*dz)>holeSize*35+250){
+      scene.remove(o.mesh); objects.splice(i,1);
+    }
   }
   const need=MAX_OBJ-objects.length;
   for(let i=0;i<Math.min(need,8);i++) spawnObject();
 }
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════
 // PARTICLES
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════
 const particles=[];
 function spawnParticles(x,z,color){
   for(let i=0;i<10;i++){
-    const m=new THREE.Mesh(new THREE.BoxGeometry(.15,.15,.15),new THREE.MeshBasicMaterial({color,transparent:true}));
+    const m=new THREE.Mesh(new THREE.BoxGeometry(.14,.14,.14),
+      new THREE.MeshBasicMaterial({color,transparent:true}));
     m.position.set(x,.6,z); scene.add(m);
-    particles.push({mesh:m,
-      vx:(Math.random()-.5)*.28,vy:.08+Math.random()*.18,vz:(Math.random()-.5)*.28,
-      life:35+Math.random()*20,maxLife:55});
+    particles.push({mesh:m,vx:(Math.random()-.5)*.28,vy:.08+Math.random()*.18,
+      vz:(Math.random()-.5)*.28,life:36+Math.random()*18,maxLife:54});
   }
 }
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════
 // LEVEL-UP
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════
 function doLevelUp(){
-  if(levelupActive) return;
-  levelupActive=true;
+  if(levelupActive) return; levelupActive=true;
   levelIdx=Math.min(levelIdx+1,LEVELS.length-1);
-  if(levelIdx===LEVELS.length-1 && LEVELS[levelIdx].name==='PLANET'){
-    // allow infinite planet runs — just bump score requirement
-    LEVELS[levelIdx].toNextBase+=100;
-  }
   levelAbsorbed=0;
+  const lvData=lv();
 
-  const lv=currentLevel();
+  // sky / ground
+  renderer.setClearColor(lvData.sky);
+  scene.background=new THREE.Color(lvData.sky);
+  groundMat.color.setHex(lvData.ground);
+  scene.fog.color.setHex(lvData.sky);
 
-  // update sky / ground
-  renderer.setClearColor(lv.sky);
-  groundMat.color.setHex(lv.groundColor);
-  grid.material.color.setHex(lv.groundColor+0x101010);
+  // rebuild roads
+  buildRoads(lvData);
 
-  // Fog
-  scene.fog.near=lv.fogNear;
-  scene.fog.far=lv.fogFar;
+  // lights: shift hemi sky color per level
+  hemiLight.color.setHex([0xfff8e0,0xfff4d8,0xf0f8ff,0xffe8c8,0xfff0e0,0xd0e8ff,0xe8c8ff][levelIdx]||0xffffff);
 
-  // update progress bar color
-  document.getElementById('progress-bar').style.background=lv.barColor;
-
-  // clear objects, spawn new level
+  // clear and respawn
   objects.forEach(o=>scene.remove(o.mesh));
   objects.length=0;
-  for(let i=0;i<50;i++) spawnObject();
+  for(let i=0;i<55;i++) spawnObject();
 
-  // show overlay
+  document.getElementById('progress-bar').style.background=lvData.barColor;
+  document.getElementById('level-name').textContent='◈ '+lvData.name+' ◈';
+
   const lu=document.getElementById('levelup');
-  document.getElementById('levelup-title').textContent=lv.name;
-  document.getElementById('levelup-sub').textContent='— '+lv.nameJP+' —';
-  document.getElementById('level-name').textContent='◈ '+lv.name+' ◈';
+  document.getElementById('levelup-title').textContent=lvData.name;
+  document.getElementById('levelup-sub').textContent='— '+lvData.nameJP+' —';
   lu.style.opacity='1';
   setTimeout(()=>{lu.style.opacity='0'; levelupActive=false;},2400);
 }
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════
 // JOYSTICK
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════
 const joyBase=document.getElementById('joy-base');
 const joyStick=document.getElementById('joy-stick');
-
-let joyDX=0,joyDZ=0;
-let joyOriginX=0,joyOriginY=0;
-let joyActive=false;
+let joyDX=0,joyDZ=0,joyOriginX=0,joyOriginY=0;
 const JOY_R=()=>Math.min(W(),H())*.14;
 
 function setJoySize(){
-  const r=JOY_R(),s=r*2+'px',ss=r*.38+'px';
-  joyBase.style.width=s; joyBase.style.height=s;
-  joyStick.style.width=ss; joyStick.style.height=ss;
+  const r=JOY_R();
+  joyBase.style.width=joyBase.style.height=r*2+'px';
+  joyStick.style.width=joyStick.style.height=r*.38+'px';
 }
 setJoySize();
 
 function joyMove(cx,cy){
-  const dx=cx-joyOriginX, dy=cy-joyOriginY;
-  const dist=Math.sqrt(dx*dx+dy*dy);
-  const r=JOY_R();
-  const clamp=Math.min(dist,r);
-  const nx=dist>0?dx/dist:0, ny=dist>0?dy/dist:0;
-  const ratio=clamp/r;
-  joyStick.style.left=(joyOriginX+nx*clamp)+'px';
-  joyStick.style.top =(joyOriginY+ny*clamp)+'px';
-  const speed=Math.max(.04, holeSize*.07);
-  joyDX=nx*ratio*speed;
-  joyDZ=ny*ratio*speed;
+  const dx=cx-joyOriginX,dy=cy-joyOriginY;
+  const dist=Math.sqrt(dx*dx+dy*dy),r=JOY_R();
+  const cl=Math.min(dist,r),nx=dist>0?dx/dist:0,ny=dist>0?dy/dist:0,ratio=cl/r;
+  joyStick.style.left=(joyOriginX+nx*cl)+'px';
+  joyStick.style.top =(joyOriginY+ny*cl)+'px';
+  const spd=Math.max(.05,holeSize*.07);
+  joyDX=nx*ratio*spd; joyDZ=ny*ratio*spd;
 }
 
-canvas.addEventListener('touchstart',e=>{
-  e.preventDefault();
-  const t=e.touches[0];
-  joyOriginX=t.clientX; joyOriginY=t.clientY;
-  joyDX=0; joyDZ=0; joyActive=true;
+function joyStart(cx,cy){
+  joyOriginX=cx; joyOriginY=cy; joyDX=0; joyDZ=0;
   joyBase.style.display='block'; joyStick.style.display='block';
-  joyBase.style.left=t.clientX+'px'; joyBase.style.top=t.clientY+'px';
-  joyStick.style.left=t.clientX+'px'; joyStick.style.top=t.clientY+'px';
-},{passive:false});
-
-canvas.addEventListener('touchmove',e=>{
-  e.preventDefault(); joyMove(e.touches[0].clientX,e.touches[0].clientY);
-},{passive:false});
-
-canvas.addEventListener('touchend',e=>{
-  e.preventDefault();
-  joyActive=false; joyDX=0; joyDZ=0;
+  joyBase.style.left=cx+'px'; joyBase.style.top=cy+'px';
+  joyStick.style.left=cx+'px'; joyStick.style.top=cy+'px';
+}
+function joyEnd(){
+  joyDX=0; joyDZ=0;
   joyBase.style.display='none'; joyStick.style.display='none';
-},{passive:false});
+}
 
+canvas.addEventListener('touchstart',e=>{e.preventDefault();joyStart(e.touches[0].clientX,e.touches[0].clientY);},{passive:false});
+canvas.addEventListener('touchmove', e=>{e.preventDefault();joyMove(e.touches[0].clientX,e.touches[0].clientY);},{passive:false});
+canvas.addEventListener('touchend',  e=>{e.preventDefault();joyEnd();},{passive:false});
 let mdown=false;
-canvas.addEventListener('mousedown',e=>{
-  mdown=true; joyOriginX=e.clientX; joyOriginY=e.clientY; joyActive=true;
-  joyBase.style.display='block'; joyStick.style.display='block';
-  joyBase.style.left=e.clientX+'px'; joyBase.style.top=e.clientY+'px';
-  joyStick.style.left=e.clientX+'px'; joyStick.style.top=e.clientY+'px';
-});
-canvas.addEventListener('mousemove',e=>{ if(mdown) joyMove(e.clientX,e.clientY); });
-canvas.addEventListener('mouseup',()=>{ mdown=false;joyActive=false;joyDX=0;joyDZ=0;joyBase.style.display='none';joyStick.style.display='none'; });
-canvas.addEventListener('mouseleave',()=>{ mdown=false;joyActive=false;joyDX=0;joyDZ=0;joyBase.style.display='none';joyStick.style.display='none'; });
+canvas.addEventListener('mousedown', e=>{mdown=true;joyStart(e.clientX,e.clientY);});
+canvas.addEventListener('mousemove', e=>{if(mdown)joyMove(e.clientX,e.clientY);});
+canvas.addEventListener('mouseup',   ()=>{mdown=false;joyEnd();});
+canvas.addEventListener('mouseleave',()=>{mdown=false;joyEnd();});
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════
 // INIT
-// ═══════════════════════════════════════
-const lv0=currentLevel();
-renderer.setClearColor(lv0.sky);
-scene.fog=new THREE.Fog(lv0.sky,lv0.fogNear,lv0.fogFar);
-document.getElementById('progress-bar').style.background=lv0.barColor;
-for(let i=0;i<50;i++) spawnObject();
+// ═══════════════════════════════════════════════════
+const lvInit=lv();
+renderer.setClearColor(lvInit.sky);
+scene.background=new THREE.Color(lvInit.sky);
+scene.fog=new THREE.Fog(lvInit.sky, 40, 200);
+for(let i=0;i<55;i++) spawnObject();
 
 const scoreEl=document.getElementById('score-val');
 const holeEl =document.getElementById('hole-val');
 const comboEl=document.getElementById('combo-val');
 const progBar=document.getElementById('progress-bar');
 const progSub=document.getElementById('progress-sub');
-const msgEl  =document.getElementById('msg');
 
 let camX=0,camZ=0,camH=camHeightForHole(holeSize);
 
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════
 // GAME LOOP
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════
 let frame=0;
 function animate(){
   requestAnimationFrame(animate);
   frame++;
 
-  // move hole
+  // hole movement
   holeX+=joyDX; holeZ+=joyDZ;
-  // clamp hole to level max size
-  holeSize=Math.min(holeSize,currentLevel().holeMax);
-
+  holeSize=Math.min(holeSize, lv().holeMax);
   updateHoleVisual();
 
   // camera
   const tH=camHeightForHole(holeSize);
   camH+=(tH-camH)*.05;
-  camX+=(holeX-camX)*.08;
-  camZ+=(holeZ-camZ)*.08;
+  camX+=(holeX-camX)*.08; camZ+=(holeZ-camZ)*.08;
   applyCamera(camX,camZ,camH);
 
-  // ground
-  ground.position.x=Math.round(camX/TILE)*TILE;
-  ground.position.z=Math.round(camZ/TILE)*TILE;
-  grid.position.x=ground.position.x;
-  grid.position.z=ground.position.z;
+  // camLight follows camera so foreground is always lit
+  camLight.position.copy(camera.position);
+  camLight.position.y-=camH*.3; // slightly below camera
+
+  // fog: near/far track camera height so it never obscures the view
+  scene.fog.near=camH*1.5;
+  scene.fog.far =camH*lv().fogFactor;
+
+  // ground + road follow
+  ground.position.x=Math.round(camX/500)*500;
+  ground.position.z=Math.round(camZ/500)*500;
+  updateRoadPosition(camX,camZ);
 
   // objects
   objects.forEach(obj=>{
@@ -672,35 +640,24 @@ function animate(){
       obj.mesh.rotation.y+=.22; obj.mesh.rotation.x+=.1;
       if(obj.mesh.position.y<-10||obj.mesh.scale.x<.03){
         scene.remove(obj.mesh); obj.absorbed=true;
-
-        // grow: diminishing returns as hole grows
-        const grow=growAmount(obj.size);
-        holeSize=Math.min(holeSize+grow, currentLevel().holeMax);
-
+        holeSize=Math.min(holeSize+growAmount(obj.size), lv().holeMax);
         score++; levelAbsorbed++;
         scoreEl.textContent=score;
         holeEl.textContent=holeSize.toFixed(1);
         spawnParticles(holeX,holeZ,PART_COLORS[obj.name]||0xffffff);
-
-        // progress bar
         const needed=neededForNext();
         const pct=Math.min(99,levelAbsorbed/needed*100);
         progBar.style.width=pct+'%';
         progSub.textContent=levelAbsorbed+' / '+needed;
-
-        // level up check
-        if(levelAbsorbed>=needed && !levelupActive) doLevelUp();
-
-        // combo
+        if(levelAbsorbed>=needed&&!levelupActive) doLevelUp();
         comboTimer=220;
       }
     } else {
-      obj.mesh.position.y=Math.sin(frame*.015+obj.bobPhase)*.07;
-      obj.mesh.rotation.y+=obj.rotSpeed;
+      // buildings stay on ground, just tiny bob
+      obj.mesh.position.y=Math.sin(frame*.014+obj.bobPhase)*.04;
       // suction
       const dx=holeX-obj.mesh.position.x,dz=holeZ-obj.mesh.position.z;
-      const dist=Math.sqrt(dx*dx+dz*dz);
-      const sR=holeSize*3.5;
+      const dist=Math.sqrt(dx*dx+dz*dz),sR=holeSize*3.5;
       if(dist<sR&&obj.size<holeSize){
         const f=(1-dist/sR)*.055;
         obj.mesh.position.x+=dx*f; obj.mesh.position.z+=dz*f;
@@ -742,19 +699,13 @@ function animate(){
   renderer.render(scene,camera);
 }
 
-function showMsg(txt){
-  msgEl.textContent=txt; msgEl.style.opacity='1';
-  setTimeout(()=>{ msgEl.style.opacity='0'; },2000);
-}
-
 animate();
 
 window.addEventListener('resize',()=>{
   setJoySize(); camera.aspect=W()/H();
   camera.updateProjectionMatrix(); renderer.setSize(W(),H());
 });
-
-setTimeout(()=>{ document.getElementById('hint').style.opacity='0'; },5000);
+setTimeout(()=>{document.getElementById('hint').style.opacity='0';},5000);
 </script>
 </body>
 </html>
